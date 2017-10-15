@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<style>
+  * {
+    margin:0;
+    border: none;
+    outline: none;
+    font-family: 'Helvetica';
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  #chat {
+    padding: 0 5px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  #messages {
+    overflow: auto;
+  }
+
+  .message {
+    margin: 1em 0;
+  }
+</style>
+
+<div id="chat">
+  <div id="messages"></div>
+  <input disabled placeholder="Connecting..." id="newmessage"></input>
+  <button id="send" type="button" onclick="sendFunc()">Send</button>
+  <a href=add_friends> Add friend </a>
+  <a href=delete_friends> View friend list </a>
+  current channel is {{token}}<b>
+  current user: {{user_id}}
+</div>
+
+<!-- Imports jQuery -->
+<script src='//ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'>
+</script>
+<!-- Imports goog.appengine.Channel. -->
+<script src='/_ah/channel/jsapi'></script>
+
+<script>
+  var messages = $('#messages');
+  var newmessage = $('#newmessage');
+
+  // Wire up the channel event handlers.
+  var channel = new goog.appengine.Channel('{{ token }}');
+  var handler = {
+    'onopen': function() {
+      // Let the chatting begin.
+      newmessage.attr('placeholder', 'Send a message');
+      newmessage.attr('disabled', false);
+      newmessage.focus();
+    },
+    'onmessage': function(m) {
+      // Blindly append the message to the end of the element.
+      messages.append('<p class="message">' + m.data + '</p>');
+    },
+    'onerror': function() {}, // No-op.
+    'onclose': function() {}, // No-op.
+  };
+channel.open(handler);
+
+// Enter-button handler, i.e. send a message.
+newmessage.on('keypress', function(e) {
+  if (e.key === 'Enter' && newmessage.val() !== '') {
+    $.post('/send', {data: newmessage.val()});
+    newmessage.val('');
+  };
+});
+
+
+function sendFunc() {
+    $.post('/send', {data: newmessage.val()});
+    newmessage.val('');
+}
+
+// Force all focus to the input box.
+newmessage.on('blur', function(e) {
+  newmessage.focus();
+});
+</script>
+
